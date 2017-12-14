@@ -1,18 +1,28 @@
 package edu.upb.andresvasquez.fragments;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 /**
  * Created by andresvasquez on 12/12/17.
@@ -25,6 +35,7 @@ public class FormFragment extends Fragment {
     private EditText nameEditText;
     private SeekBar progressSeekBar;
     private Button threadButton;
+    private Button saveButton;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -48,6 +59,7 @@ public class FormFragment extends Fragment {
         nameEditText=view.findViewById(R.id.nameEditText);
         progressSeekBar=view.findViewById(R.id.progressSeekBar);
         threadButton = view.findViewById(R.id.threadButton);
+        saveButton = view.findViewById(R.id.saveButton);
         return view;
     }
 
@@ -105,6 +117,21 @@ public class FormFragment extends Fragment {
                     }
                 };
                 hilo.start();*/
+            }
+        });
+
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveInPreferences();
+            }
+        });
+
+        saveButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                clearPreferences();
+                return false;
             }
         });
     }
@@ -170,5 +197,40 @@ public class FormFragment extends Fragment {
             super.onPostExecute(resultado);
             activity.procesoLiveData.setValue(resultado);
         }
+    }
+
+    private void saveInPreferences(){
+        String contenido = nameEditText.getText().toString();
+        int progreso=progressSeekBar.getProgress();
+
+        Datitos adrian = new Datitos(contenido,progreso);
+        adrian.setSucess(true);
+        adrian.setTimestamp(Calendar.getInstance().getTimeInMillis());
+
+        //Agregar lista
+        List<Datitos> datitos = new ArrayList<>();
+        datitos.add(new Datitos("Natalia",22));
+        datitos.add(new Datitos("Lucia",24));
+        datitos.add(new Datitos("Andres",22));
+        adrian.setDatitos(datitos);
+
+        String json = new Gson().toJson(adrian);
+        Log.d("JSON",json);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("CONTENIDO",contenido);
+        editor.putInt("PROGRESO",progreso);
+        editor.putString("JSON",json);
+        editor.apply();
+    }
+
+    private void clearPreferences(){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.remove("CONTENIDO");
+        editor.remove("PROGRESO");
+        editor.apply();
+        Toast.makeText(context,"Datos borrados",Toast.LENGTH_SHORT).show();
     }
 }

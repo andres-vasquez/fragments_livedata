@@ -24,4 +24,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10" />
+
+    <Button
+        android:id="@+id/showDataButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Show data" />
+
+    <TextView
+        android:id="@+id/dataTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10" />
 </LinearLayout>
