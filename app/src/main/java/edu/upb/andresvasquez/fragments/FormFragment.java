@@ -107,6 +107,7 @@ public class FormFragment extends Fragment {
 
                 //Execute mando los parametros
                 new AccionLarga().execute(7000);
+                activity.searchLiveData.setValue(nameEditText.getText().toString());
 
                 /*activity.procesoLiveData.setValue("Proceso iniciado");
 

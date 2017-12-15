@@ -12,16 +12,25 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by andresvasquez on 12/12/17.
  */
 
 public class ResultFragment extends Fragment {
+    private static final String LOG = ResultFragment.class.getSimpleName();
+
     private Context context;
     private MainActivity activity;
 
@@ -30,6 +39,7 @@ public class ResultFragment extends Fragment {
     private TextView procesoTextView;
     private Button showDataButton;
     private TextView dataTextView;
+    private ImageView pokemonImageView;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -55,6 +65,7 @@ public class ResultFragment extends Fragment {
         procesoTextView = view.findViewById(R.id.procesoTextView);
         showDataButton = view.findViewById(R.id.showDataButton);
         dataTextView = view.findViewById(R.id.dataTextView);
+        pokemonImageView = view.findViewById(R.id.pokemonImageView);
         return view;
     }
 
@@ -90,6 +101,16 @@ public class ResultFragment extends Fragment {
             }
         });
 
+        activity.searchLiveData.observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(@Nullable String s) {
+                if (s != null) {
+                    searchPokemon(s);
+                }
+            }
+        });
+
+
         showDataButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -109,16 +130,56 @@ public class ResultFragment extends Fragment {
         //seekBar.setProgress(prefs.getInt("PROGRESO",0));
 
 
-        try
-        {
-            String json =prefs.getString("JSON","");
-            Datitos adrian = new Gson().fromJson(json,Datitos.class);
+        try {
+            String json = prefs.getString("JSON", "");
+            Datitos adrian = new Gson().fromJson(json, Datitos.class);
 
             Datitos natalia = adrian.getDatitos().get(0);
             seekBar.setProgress(natalia.getProgreso());
             dataTextView.setText(natalia.getName());
-        }catch (Exception ex){
-            Log.e("ERROR",""+ex.getMessage());
+        } catch (Exception ex) {
+            Log.e("ERROR", "" + ex.getMessage());
         }
+    }
+
+    private void searchPokemon(String search) {
+        Call<Pokemon> pokemonCall = activity.pokemonService.searchPokemon(search);
+        pokemonCall.enqueue(new Callback<Pokemon>() {
+            @Override
+            public void onResponse(Call<Pokemon> call, Response<Pokemon> response) {
+                if (response.isSuccessful()) {
+                    Pokemon pokemon = response.body();
+                    showPokemon(pokemon);
+                } else {
+                    showError();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Pokemon> call, Throwable t) {
+                Log.e(LOG, "" + t.getMessage());
+            }
+        });
+    }
+
+    private void showPokemon(final Pokemon pokemon) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                dataTextView.setText(pokemon.getName());
+                Glide.with(context)
+                        .load(pokemon.getSprites().getFront_default())
+                        .into(pokemonImageView);
+            }
+        });
+    }
+
+    private void showError(){
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(context,"Usted no sabe de Pokemons, vuelva a la academia",Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
